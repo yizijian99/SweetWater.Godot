@@ -1,9 +1,44 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>8</LangVersion>
         <Nullable>enable</Nullable>
+        <RootNamespace>Godot</RootNamespace>
+        <Version>1.0.0-dev</Version>
+        
+        <Title>SweetWater.Godot.SourceGenerators</Title>
+        <Description>Extended C# source generator for Godot projects.</Description>
+        <Copyright>yizijian99</Copyright>
+        <PackageTags>Godot C# SourceGenerator</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    </PropertyGroup>
+
+    <!-- Package References -->
+    <ItemGroup>
+        <PackageReference Include="Scriban" Version="5.9.1" IncludeAssets="build" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.CSharp" Version="4.7.0" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" PrivateAssets="all" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers\dotnet\cs" Link="Package\analyzers\dotnet\cs\$(AssemblyName).dll" />
+    </ItemGroup>
+    
+    <!-- Scriban Settings -->
+    <ItemGroup>
+        <EmbeddedResource Include="**\*.sbncs" />
+    </ItemGroup>
+    <PropertyGroup>
+        <PackageScribanIncludeSource>true</PackageScribanIncludeSource>
     </PropertyGroup>
 
 </Project>
