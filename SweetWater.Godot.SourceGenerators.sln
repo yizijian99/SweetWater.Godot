@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SweetWater.Godot.SourceGenerators", "SweetWater.Godot.SourceGenerators\SweetWater.Godot.SourceGenerators.csproj", "{E13880F4-DA35-4371-B886-B3605B2D9D8C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SweetWater.Godot.SourceGenerators.Test", "SweetWater.Godot.SourceGenerators.Test\SweetWater.Godot.SourceGenerators.Test.csproj", "{0243B3B3-5D37-40F1-8AE5-793F7092AC9E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{E13880F4-DA35-4371-B886-B3605B2D9D8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E13880F4-DA35-4371-B886-B3605B2D9D8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E13880F4-DA35-4371-B886-B3605B2D9D8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0243B3B3-5D37-40F1-8AE5-793F7092AC9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0243B3B3-5D37-40F1-8AE5-793F7092AC9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0243B3B3-5D37-40F1-8AE5-793F7092AC9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0243B3B3-5D37-40F1-8AE5-793F7092AC9E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
