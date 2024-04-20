@@ -2,7 +2,20 @@
 
 namespace SweetWater.Godot.SourceGenerators.Test;
 
-public partial class MyNode : Node
+internal partial class MyNode : Node
 {
-    public override partial void _Notification(int what);
+    [OnReady("Xxx")]
+    public string String { get; }
+    
+    [OnReady("yyy")]
+    public Timer obj;
+    
+    [OnReady("gdfds")]
+    public Node obj2;
+
+    public override void _Ready()
+    {
+        base._Ready();
+        _OnReady();
+    }
 }
