@@ -3,7 +3,7 @@
 namespace Godot;
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-public class OnReadyAttribute : Attribute
+public sealed class OnReadyAttribute : Attribute
 {
     public string NodePath;
 
