@@ -8,13 +8,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SweetWater.Godot.SourceGenerators\SweetWater.Godot.SourceGenerators.csproj"
-                          OutputItemType="Analyzer"
-                          ReferenceOutputAssembly="false"/>
+      <Compile Include="..\SweetWater.Godot.SourceGenerators\OnReadyAttribute.cs" Link="OnReadyAttribute.cs" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="GodotSharp" Version="4.1.0"/>
+        <ProjectReference Include="..\SweetWater.Godot.SourceGenerators\SweetWater.Godot.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="GodotSharp" Version="4.1.0" />
     </ItemGroup>
 
 </Project>

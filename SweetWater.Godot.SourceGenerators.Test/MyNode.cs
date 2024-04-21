@@ -2,20 +2,21 @@
 
 namespace SweetWater.Godot.SourceGenerators.Test;
 
-internal partial class MyNode : Node
+public partial class MyNode : Node
 {
     [OnReady("Xxx")]
-    public string String { get; }
-    
+    public Node2D String { get; set; }
+
     [OnReady("yyy")]
     public Timer obj;
-    
+
     [OnReady("gdfds")]
     public Node obj2;
-
     public override void _Ready()
     {
-        base._Ready();
         _OnReady();
+        GD.Print(Icon.EventName.Tick);
+        GD.Print(Ticktok.EventName.Tt);
+        GD.Print(SignalName.Ready);
     }
 }
