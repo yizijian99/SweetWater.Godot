@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Include="..\SweetWater.Godot.SourceGenerators\OnEventAttribute.cs" Link="OnEventAttribute.cs" />
       <Compile Include="..\SweetWater.Godot.SourceGenerators\OnReadyAttribute.cs" Link="OnReadyAttribute.cs" />
     </ItemGroup>
 

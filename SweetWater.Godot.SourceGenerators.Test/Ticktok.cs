@@ -12,7 +12,5 @@ public partial class Ticktok : Icon
     public override void _Ready()
     {
         _OnReady();
-        GD.Print(Icon.EventName.Tick);
-        GD.Print(EventName.Tick);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Godot;
+using System;
 
 namespace SweetWater.Godot.SourceGenerators.Test;
 
@@ -15,8 +16,14 @@ public partial class MyNode : Node
     public override void _Ready()
     {
         _OnReady();
-        GD.Print(Icon.EventName.Tick);
-        GD.Print(Ticktok.EventName.Tt);
-        GD.Print(SignalName.Ready);
+        Test?.Invoke();
+    }
+
+    public event Action? Test;
+
+    [OnEvent("Test")]
+    public void OnEventMethod()
+    {
+        GD.Print("OnEventMethod");
     }
 }

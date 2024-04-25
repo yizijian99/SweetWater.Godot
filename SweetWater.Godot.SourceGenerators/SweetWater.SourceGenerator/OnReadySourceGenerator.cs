@@ -1,10 +1,11 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Scriban;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 
 namespace Godot.SweetWater.SourceGenerator;
 
@@ -24,16 +25,16 @@ public class OnReadySourceGenerator : IIncrementalGenerator
                         static (node, _) =>
                         {
                             return node is VariableDeclaratorSyntax
-                                   || node is PropertyDeclarationSyntax
-                                   || node is MethodDeclarationSyntax;
+                                   || node is PropertyDeclarationSyntax;
                         },
                         static (context, _) => context
                     ).Collect())
                 )
             .Combine(
-                context.SyntaxProvider.CreateSyntaxProvider(
-                        (node, _) => node is EventDeclarationSyntax || node is EventFieldDeclarationSyntax,
-                        static (ctx, _) => (MemberDeclarationSyntax)ctx.Node
+                context.SyntaxProvider.ForAttributeWithMetadataName(
+                        typeof(OnEventAttribute).FullName!,
+                        (node, _) => node is MethodDeclarationSyntax,
+                        static (context, _) => context
                     ).Collect()
                 );
 
@@ -41,12 +42,12 @@ public class OnReadySourceGenerator : IIncrementalGenerator
     }
 
     private void Execute(SourceProductionContext spc,
-        ((Compilation Left, (ImmutableArray<ClassDeclarationSyntax> Left, ImmutableArray<GeneratorAttributeSyntaxContext> Right) Right) Left, ImmutableArray<MemberDeclarationSyntax> Right) tuple)
+        ((Compilation Left, (ImmutableArray<ClassDeclarationSyntax> Left, ImmutableArray<GeneratorAttributeSyntaxContext> Right) Right) Left, ImmutableArray<GeneratorAttributeSyntaxContext> Right) tuple)
     {
         var compilation = tuple.Left.Left;
         var classNodes = tuple.Left.Right.Left;
         var onReadyMembers = tuple.Left.Right.Right;
-        var eventNodes = tuple.Right;
+        var onEventMethods = tuple.Right;
         Dictionary<(string, string), OnReadyModel> dict = new();
 
         foreach (var classNode in classNodes)
@@ -107,91 +108,85 @@ public class OnReadySourceGenerator : IIncrementalGenerator
             }
         }
 
-        foreach (var memberNode in eventNodes)
+        foreach (var gasc in onEventMethods)
         {
-            var classNode = memberNode.Ancestors().OfType<ClassDeclarationSyntax>().FirstOrDefault();
-            if (classNode == null) continue;
+            var targetSymbol = (IMethodSymbol)gasc.TargetSymbol;
+            var @namespace = gasc.TargetSymbol.ContainingNamespace.ToString();
+            string @class = gasc.TargetSymbol.ContainingType.Name;
 
-            var namespaceNode = classNode.Ancestors().OfType<BaseNamespaceDeclarationSyntax>().FirstOrDefault();
-            string @namespace = namespaceNode == null ? string.Empty : namespaceNode.Name.ToString();
-            string @class = classNode.Identifier.ValueText;
             if (!dict.TryGetValue((@namespace, @class), out OnReadyModel model)) continue;
 
-            var semanticModel = compilation.GetSemanticModel(classNode.SyntaxTree);
-            ISymbol? symbol = null;
-            if (memberNode is EventFieldDeclarationSyntax eventFieldNode)
+            var onEventMethod = new OnReadyModel.OnEventMethod()
             {
-                symbol = semanticModel.GetDeclaredSymbol(eventFieldNode.Declaration.Variables[0]);
-            }
-            else if (memberNode is EventDeclarationSyntax eventNode)
+                Name = targetSymbol.Name,
+            };
+
+            var attributeDatas = gasc.Attributes;
+            foreach (var item in attributeDatas)
             {
-                symbol = semanticModel.GetDeclaredSymbol(eventNode);
-            }
-            if (symbol is IEventSymbol
+                var eventName = (string)item.ConstructorArguments[0].Value!;
+                var nodePath = (string)item.ConstructorArguments[1].Value!;
+                var nodeType = (INamedTypeSymbol)item.ConstructorArguments[2].Value!;
+                Console.WriteLine($"{eventName} {nodePath} {nodeType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}");
+                onEventMethod.OnEventList.Add(new OnReadyModel.OnEvent()
                 {
-                    AddMethod: not null,
-                    RemoveMethod: not null,
-                } eventSymbol)
-            {
-                model.Events.Add(new OnReadyModel.Event()
-                {
-                    Name = eventSymbol.Name
+                    EventName = eventName,
+                    NodePath = string.IsNullOrEmpty(nodePath) ? "." : nodePath,
+                    NodeType = nodeType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ?? @class,
                 });
             }
+            model.OnEventMethods.Add(onEventMethod);
         }
-
+        // GetNodeOrNull<{{item.NodeType}}>("{{item.NodePath}}").{{item.EventName}} += {{method.Name}};
         foreach (KeyValuePair<(string, string), OnReadyModel> entry in dict)
         {
             var model = entry.Value;
-            StringBuilder fieldOrPropertyStmts = new();
             List<OnReadyModel.IFieldOrProperty> fieldOrPropertyList =
                 model.Fields.Concat(model.Properties.Cast<OnReadyModel.IFieldOrProperty>()).ToList();
-            foreach (var item in fieldOrPropertyList)
-            {
-                var getNodeStmt = $"\t\t\t{item.Name} = GetNodeOrNull<{item.Type}>(\"{item.NodePath}\");";
-                fieldOrPropertyStmts.AppendLine(getNodeStmt);
-                var pushDictStmt = $"\t\t\tdict[\"{item.NodePath}\"] = {item.Name};";
-                fieldOrPropertyStmts.AppendLine(pushDictStmt);
-            }
 
-            StringBuilder eventStmts = new();
-            foreach (var item in model.Events)
-            {
-                var eventNameStmt = $"\t\t\tpublic const string {item.Name} = \"{item.Name}\";";
-                eventStmts.AppendLine(eventNameStmt);
-            }
             string? filePrefix = string.IsNullOrEmpty(model.Namespace) ? string.Empty : $"{model.Namespace}.";
-            spc.AddSource($"{filePrefix}{model.ClassName}_OnReady.generated.cs",
-                $@"// <auto-generated/>
-using System;
-
-namespace {model.Namespace}
-{{
-    {model.Modifiers} class {model.ClassName}
-    {{
-#pragma warning disable CS8321
-        private void _OnReady()
-        {{
-            System.Collections.Generic.Dictionary<string, object> dict = new({fieldOrPropertyList.Count});
-            void Fn<T>(string key, Action<T> action) where T : class
-            {{
-                object o = dict[key];
-                o ??= GetNodeOrNull<T>(key);
-                if (o is T n) action.Invoke(n);
-            }}
-{fieldOrPropertyStmts.ToString().TrimEnd('\n')}
-        }}
-#pragma warning disable CS8321
-
-#pragma warning disable CS0109
-        public new class EventName
-        {{
-{eventStmts.ToString().TrimEnd('\n')}
-        }}
-#pragma warning restore CS0109
-    }}
-}}
-");
+            var tpl = Template.Parse("""
+                // <auto-generated/>
+                using System;
+                
+                namespace {{Namespace}}
+                {
+                    {{Modifiers}} class {{ClassName}}
+                    {
+                #pragma warning disable CS8321
+                        private void _OnReady()
+                        {
+                            System.Collections.Generic.Dictionary<string, object> dict = new();
+                            void FromCache<T>(string key, Action<T> action) where T : class
+                            {
+                                if (!dict.TryGetValue(key, out object o)) o = GetNodeOrNull<T>(key);
+                                if (o is T n)
+                                {
+                                    dict[key] = n;
+                                    action.Invoke(n);
+                                }
+                            }
+                {{for item in Fields}}
+                            {{item.Name}} = GetNodeOrNull<{{item.Type}}>("{{item.NodePath}}");
+                            dict["{{item.NodePath}}"] = {{item.Name}};
+                {{end~}}
+                {{for item in Properties}}
+                            {{item.Name}} = GetNodeOrNull<{{item.Type}}>("{{item.NodePath}}");
+                            dict["{{item.NodePath}}"] = {{item.Name}};
+                {{end~}}
+                {{for method in OnEventMethods-}}
+                {{for item in method.OnEventList}}
+                            FromCache<{{item.NodeType}}>("{{item.NodePath}}", v => v.{{item.EventName}} += {{method.Name}});
+                {{end-}}
+                {{end~}}
+                        }
+                #pragma warning disable CS8321
+                    }
+                }
+                """);
+            var source = tpl.Render(model, member => member.Name);
+            Console.WriteLine(source);
+            spc.AddSource($"{filePrefix}{model.ClassName}_OnReady.generated.cs", source);
         }
     }
 
