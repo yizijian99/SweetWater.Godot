@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Godot;
+namespace SweetWater.Godot;
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
 public sealed class OnEventAttribute : Attribute

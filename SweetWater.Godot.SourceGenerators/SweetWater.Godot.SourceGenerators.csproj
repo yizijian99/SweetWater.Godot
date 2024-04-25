@@ -4,8 +4,8 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>11</LangVersion>
         <Nullable>enable</Nullable>
-        <RootNamespace>Godot</RootNamespace>
-        <Version>1.0.0-dev</Version>
+        <RootNamespace>SweetWater.Godot</RootNamespace>
+        <Version>1.0.0</Version>
         
         <Title>SweetWater.Godot.SourceGenerators</Title>
         <Description>Extended C# source generator for Godot projects.</Description>

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Godot;
+namespace SweetWater.Godot;
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
 public sealed class OnReadyAttribute : Attribute

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace Godot.SweetWater.SourceGenerator;
+namespace SweetWater.Godot.SourceGenerator;
 
 [Generator(LanguageNames.CSharp)]
 public class OnReadySourceGenerator : IIncrementalGenerator

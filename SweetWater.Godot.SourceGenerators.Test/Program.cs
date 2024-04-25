@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace SweetWater.Godot.SourceGenerators.Test;
+﻿namespace SweetWater.Godot.SourceGenerators.Test;
 
 public static class Program
 {
