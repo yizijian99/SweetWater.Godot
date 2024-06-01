@@ -1,9 +1,9 @@
 ﻿using System;
 
-namespace SweetWater.Godot;
+namespace SweetWater.Godot.SourceGenerators.Attribute;
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
-public sealed class OnEventAttribute : Attribute
+public sealed class OnEventAttribute : System.Attribute
 {
     public string EventName;
     public string NodePath;

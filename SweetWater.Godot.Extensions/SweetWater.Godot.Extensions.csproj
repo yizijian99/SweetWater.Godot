@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <Version>4.2.2</Version>
+        <RootNamespace>SweetWater.Godot.Extensions</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="GodotSharp" Version="4.2.2" />
+      <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.6" />
+    </ItemGroup>
+
+
+
+</Project>

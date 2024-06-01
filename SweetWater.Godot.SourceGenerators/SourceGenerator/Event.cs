@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace SweetWater.Godot.SourceGenerator;
+namespace SweetWater.Godot.SourceGenerators.SourceGenerator;
 
 public sealed class Event<T> where T : Delegate
 {

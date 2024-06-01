@@ -1,4 +1,5 @@
 ﻿using Godot;
+using SweetWater.Godot.SourceGenerators.Attribute;
 
 namespace SweetWater.Godot.SourceGenerators.Test;
 

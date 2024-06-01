@@ -1,4 +1,4 @@
-﻿namespace SweetWater.Godot.SourceGenerator;
+﻿namespace SweetWater.Godot.SourceGenerators.SourceGenerator;
 
 internal interface ITypeDeclaredModel
 {

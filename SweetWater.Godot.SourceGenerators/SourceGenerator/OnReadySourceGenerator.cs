@@ -1,13 +1,14 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Scriban;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Scriban;
+using SweetWater.Godot.SourceGenerators.Attribute;
 
-namespace SweetWater.Godot.SourceGenerator;
+namespace SweetWater.Godot.SourceGenerators.SourceGenerator;
 
 [Generator(LanguageNames.CSharp)]
 public class OnReadySourceGenerator : IIncrementalGenerator

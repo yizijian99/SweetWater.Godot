@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SweetWater.Godot.SourceGenerator
+namespace SweetWater.Godot.SourceGenerators.SourceGenerator
 {
     internal class OnReadyModel : ITypeDeclaredModel
     {
