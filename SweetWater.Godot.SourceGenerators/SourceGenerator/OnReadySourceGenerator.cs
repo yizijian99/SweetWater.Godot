@@ -15,8 +15,8 @@ public class OnReadySourceGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var syntaxProvider =
-            context.CompilationProvider.Combine(
+        IncrementalValueProvider<((Compilation Left, (ImmutableArray<ClassDeclarationSyntax> Left, ImmutableArray<GeneratorAttributeSyntaxContext> Right) Right) Left, ImmutableArray<GeneratorAttributeSyntaxContext> Right)>
+            syntaxProvider = context.CompilationProvider.Combine(
                 context.SyntaxProvider.CreateSyntaxProvider(
                         (node, _) => CheckClassDeclaration(node),
                         static (ctx, _) => (ClassDeclarationSyntax)ctx.Node
@@ -46,18 +46,18 @@ public class OnReadySourceGenerator : IIncrementalGenerator
         ((Compilation Left, (ImmutableArray<ClassDeclarationSyntax> Left, ImmutableArray<GeneratorAttributeSyntaxContext> Right) Right) Left, ImmutableArray<GeneratorAttributeSyntaxContext> Right) tuple)
     {
         var compilation = tuple.Left.Left;
-        var classNodes = tuple.Left.Right.Left;
-        var onReadyMembers = tuple.Left.Right.Right;
-        var onEventMethods = tuple.Right;
+        ImmutableArray<ClassDeclarationSyntax> classNodes = tuple.Left.Right.Left;
+        ImmutableArray<GeneratorAttributeSyntaxContext> onReadyMembers = tuple.Left.Right.Right;
+        ImmutableArray<GeneratorAttributeSyntaxContext> onEventMethods = tuple.Right;
         Dictionary<(string, string), OnReadyModel> dict = new();
 
-        foreach (var classNode in classNodes)
+        foreach (ClassDeclarationSyntax? classNode in classNodes)
         {
-            var semanticModel = compilation.GetSemanticModel(classNode.SyntaxTree);
-            var classSymbol = semanticModel.GetDeclaredSymbol(classNode);
+            SemanticModel semanticModel = compilation.GetSemanticModel(classNode.SyntaxTree);
+            INamedTypeSymbol? classSymbol = semanticModel.GetDeclaredSymbol(classNode);
             if (!IsInheritedFromGodotNode(classSymbol)) continue;
 
-            var namespaceNode = classNode.Ancestors().OfType<BaseNamespaceDeclarationSyntax>().FirstOrDefault();
+            BaseNamespaceDeclarationSyntax? namespaceNode = classNode.Ancestors().OfType<BaseNamespaceDeclarationSyntax>().FirstOrDefault();
             string @namespace = namespaceNode == null ? string.Empty : namespaceNode.Name.ToString();
             string @class = classNode.Identifier.ValueText;
 
@@ -73,16 +73,16 @@ public class OnReadySourceGenerator : IIncrementalGenerator
             }
         }
 
-        foreach (var gasc in onReadyMembers)
+        foreach (GeneratorAttributeSyntaxContext gasc in onReadyMembers)
         {
-            var targetSymbol = gasc.TargetSymbol;
-            var @namespace = gasc.TargetSymbol.ContainingNamespace.ToString();
+            ISymbol targetSymbol = gasc.TargetSymbol;
+            string? @namespace = gasc.TargetSymbol.ContainingNamespace.ToString();
             string @class = gasc.TargetSymbol.ContainingType.Name;
 
             if (!dict.TryGetValue((@namespace, @class), out OnReadyModel model)) continue;
 
-            var attributeData = gasc.Attributes.First();
-            var nodePath = (string)attributeData.ConstructorArguments[0].Value!;
+            AttributeData attributeData = gasc.Attributes.First();
+            string nodePath = (string)attributeData.ConstructorArguments[0].Value!;
             if (targetSymbol is IPropertySymbol
                 {
                     GetMethod: not null,
@@ -109,31 +109,31 @@ public class OnReadySourceGenerator : IIncrementalGenerator
             }
         }
 
-        foreach (var gasc in onEventMethods)
+        foreach (GeneratorAttributeSyntaxContext gasc in onEventMethods)
         {
-            var targetSymbol = (IMethodSymbol)gasc.TargetSymbol;
-            var @namespace = gasc.TargetSymbol.ContainingNamespace.ToString();
+            IMethodSymbol targetSymbol = (IMethodSymbol)gasc.TargetSymbol;
+            string? @namespace = gasc.TargetSymbol.ContainingNamespace.ToString();
             string @class = gasc.TargetSymbol.ContainingType.Name;
 
             if (!dict.TryGetValue((@namespace, @class), out OnReadyModel model)) continue;
 
-            var onEventMethod = new OnReadyModel.OnEventMethod()
+            OnReadyModel.OnEventMethod onEventMethod = new()
             {
                 Name = targetSymbol.Name,
             };
 
-            var attributeDatas = gasc.Attributes;
-            foreach (var item in attributeDatas)
+            ImmutableArray<AttributeData> attributeDatas = gasc.Attributes;
+            foreach (AttributeData? item in attributeDatas)
             {
-                var eventName = (string)item.ConstructorArguments[0].Value!;
-                var nodePath = (string)item.ConstructorArguments[1].Value!;
-                var nodeType = (INamedTypeSymbol)item.ConstructorArguments[2].Value!;
-                Console.WriteLine($"{eventName} {nodePath} {nodeType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}");
+                string eventName = (string)item.ConstructorArguments[0].Value!;
+                string nodePath = (string)item.ConstructorArguments[1].Value!;
+                INamedTypeSymbol nodeType = (INamedTypeSymbol)item.ConstructorArguments[2].Value!;
+                Console.WriteLine($"{eventName} {nodePath} {nodeType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}");
                 onEventMethod.OnEventList.Add(new OnReadyModel.OnEvent()
                 {
                     EventName = eventName,
                     NodePath = string.IsNullOrEmpty(nodePath) ? "." : nodePath,
-                    NodeType = nodeType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ?? @class,
+                    NodeType = nodeType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 });
             }
             model.OnEventMethods.Add(onEventMethod);
@@ -141,51 +141,49 @@ public class OnReadySourceGenerator : IIncrementalGenerator
         // GetNodeOrNull<{{item.NodeType}}>("{{item.NodePath}}").{{item.EventName}} += {{method.Name}};
         foreach (KeyValuePair<(string, string), OnReadyModel> entry in dict)
         {
-            var model = entry.Value;
-            List<OnReadyModel.IFieldOrProperty> fieldOrPropertyList =
-                model.Fields.Concat(model.Properties.Cast<OnReadyModel.IFieldOrProperty>()).ToList();
+            OnReadyModel? model = entry.Value;
 
-            string? filePrefix = string.IsNullOrEmpty(model.Namespace) ? string.Empty : $"{model.Namespace}.";
-            var tpl = Template.Parse("""
-                // <auto-generated/>
-                using System;
-                
-                namespace {{Namespace}}
-                {
-                    {{Modifiers}} class {{ClassName}}
-                    {
-                #pragma warning disable CS8321
-                        private void _OnReady()
-                        {
-                            System.Collections.Generic.Dictionary<string, object> dict = new();
-                            void FromCache<T>(string key, Action<T> action) where T : class
-                            {
-                                if (!dict.TryGetValue(key, out object o)) o = GetNodeOrNull<T>(key);
-                                if (o is T n)
-                                {
-                                    dict[key] = n;
-                                    action.Invoke(n);
-                                }
-                            }
-                {{for item in Fields}}
-                            {{item.Name}} = GetNodeOrNull<{{item.Type}}>("{{item.NodePath}}");
-                            dict["{{item.NodePath}}"] = {{item.Name}};
-                {{end~}}
-                {{for item in Properties}}
-                            {{item.Name}} = GetNodeOrNull<{{item.Type}}>("{{item.NodePath}}");
-                            dict["{{item.NodePath}}"] = {{item.Name}};
-                {{end~}}
-                {{for method in OnEventMethods-}}
-                {{for item in method.OnEventList}}
-                            FromCache<{{item.NodeType}}>("{{item.NodePath}}", v => v.{{item.EventName}} += {{method.Name}});
-                {{end-}}
-                {{end~}}
-                        }
-                #pragma warning disable CS8321
-                    }
-                }
-                """);
-            var source = tpl.Render(model, member => member.Name);
+            string filePrefix = string.IsNullOrEmpty(model.Namespace) ? string.Empty : $"{model.Namespace}.";
+            Template? tpl = Template.Parse("""
+                                           // <auto-generated/>
+                                           using System;
+
+                                           namespace {{Namespace}}
+                                           {
+                                               {{Modifiers}} class {{ClassName}}
+                                               {
+                                           #pragma warning disable CS8321
+                                                   private void _OnReady()
+                                                   {
+                                                       System.Collections.Generic.Dictionary<string, object> dict = new();
+                                                       void FromCache<T>(string key, Action<T> action) where T : class
+                                                       {
+                                                           if (!dict.TryGetValue(key, out object o)) o = GetNodeOrNull<T>(key);
+                                                           if (o is T n)
+                                                           {
+                                                               dict[key] = n;
+                                                               action.Invoke(n);
+                                                           }
+                                                       }
+                                           {{for item in Fields}}
+                                                       {{item.Name}} = GetNodeOrNull<{{item.Type}}>("{{item.NodePath}}");
+                                                       dict["{{item.NodePath}}"] = {{item.Name}};
+                                           {{end~}}
+                                           {{for item in Properties}}
+                                                       {{item.Name}} = GetNodeOrNull<{{item.Type}}>("{{item.NodePath}}");
+                                                       dict["{{item.NodePath}}"] = {{item.Name}};
+                                           {{end~}}
+                                           {{for method in OnEventMethods-}}
+                                           {{for item in method.OnEventList}}
+                                                       FromCache<{{item.NodeType}}>("{{item.NodePath}}", v => v.{{item.EventName}} += {{method.Name}});
+                                           {{end-}}
+                                           {{end~}}
+                                                   }
+                                           #pragma warning disable CS8321
+                                               }
+                                           }
+                                           """);
+            string? source = tpl.Render(model, member => member.Name);
             Console.WriteLine(source);
             spc.AddSource($"{filePrefix}{model.ClassName}_OnReady.generated.cs", source);
         }
