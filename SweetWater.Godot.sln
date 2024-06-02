@@ -15,6 +15,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SweetWater.Godot.Extensions", "SweetWater.Godot.Extensions\SweetWater.Godot.Extensions.csproj", "{4256046B-5990-426F-8CA1-2FCFACF8F016}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csproj", "csproj", "{A337DEF4-C38E-4550-8002-AA214961C32A}"
+	ProjectSection(SolutionItems) = preProject
+		SweetWater.Godot.SourceGenerators\SweetWater.Godot.SourceGenerators.csproj = SweetWater.Godot.SourceGenerators\SweetWater.Godot.SourceGenerators.csproj
+		SweetWater.Godot.SourceGenerators.Test\SweetWater.Godot.SourceGenerators.Test.csproj = SweetWater.Godot.SourceGenerators.Test\SweetWater.Godot.SourceGenerators.Test.csproj
+		SweetWater.Godot.Extensions\SweetWater.Godot.Extensions.csproj = SweetWater.Godot.Extensions\SweetWater.Godot.Extensions.csproj
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,5 +46,8 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {87E0F324-5C6F-412A-BF3A-4338701998B8}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A337DEF4-C38E-4550-8002-AA214961C32A} = {FCC0988A-BC5F-4501-A54D-980403DA9D90}
 	EndGlobalSection
 EndGlobal
