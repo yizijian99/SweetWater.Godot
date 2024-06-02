@@ -45,7 +45,7 @@ public class OnReadySourceGenerator : IIncrementalGenerator
     private void Execute(SourceProductionContext spc,
         ((Compilation Left, (ImmutableArray<ClassDeclarationSyntax> Left, ImmutableArray<GeneratorAttributeSyntaxContext> Right) Right) Left, ImmutableArray<GeneratorAttributeSyntaxContext> Right) tuple)
     {
-        var compilation = tuple.Left.Left;
+        Compilation? compilation = tuple.Left.Left;
         ImmutableArray<ClassDeclarationSyntax> classNodes = tuple.Left.Right.Left;
         ImmutableArray<GeneratorAttributeSyntaxContext> onReadyMembers = tuple.Left.Right.Right;
         ImmutableArray<GeneratorAttributeSyntaxContext> onEventMethods = tuple.Right;
@@ -127,13 +127,13 @@ public class OnReadySourceGenerator : IIncrementalGenerator
             {
                 string eventName = (string)item.ConstructorArguments[0].Value!;
                 string nodePath = (string)item.ConstructorArguments[1].Value!;
-                INamedTypeSymbol nodeType = (INamedTypeSymbol)item.ConstructorArguments[2].Value!;
-                Console.WriteLine($"{eventName} {nodePath} {nodeType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}");
+                INamedTypeSymbol? nodeType = (INamedTypeSymbol?)item.ConstructorArguments[2].Value;
+                Console.WriteLine($"{eventName} {nodePath} {nodeType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}");
                 onEventMethod.OnEventList.Add(new OnReadyModel.OnEvent()
                 {
                     EventName = eventName,
                     NodePath = string.IsNullOrEmpty(nodePath) ? "." : nodePath,
-                    NodeType = nodeType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    NodeType = nodeType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ?? @class,
                 });
             }
             model.OnEventMethods.Add(onEventMethod);
